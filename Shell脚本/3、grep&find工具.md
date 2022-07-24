@@ -1,0 +1,447 @@
+# 文件目录管理操作
+
+[toc]
+
+## 一、grep
+
+> * 作用
+>   * 按条件过滤文件内容
+> * 使用格式
+>   * grep [option] “PATTERN” 文件名称
+>     * option：可有可无
+>     * PATTERN：条件，
+>       * 由普通字符和正则表达式
+
+### 1、grep基本使用
+
+```linux
+[root@localhost ~]# grep "root" /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+operator:x:11:0:operator:/root:/sbin/nologin
+```
+
+* **grep的默认行为，某一行中带有符合条件的内容，整行都会显示**
+
+### 2、正则表达式
+
+* 由一类特殊字符【元字符】组成的表达式，可以去匹配一类具有相同特征的文本
+
+* $、^、*、.、[]、\w、\W是普通的正则表达式。我也不知道该怎么形容- -
+
+  {}、+、？要加-E，扩展正则表达式
+
+  \d、\D要加-P，perl的正则表达式
+
+[perl的正则表达式]: https://blog.csdn.net/sunshoupo211/article/details/31769837?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522164796122116782246415411%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&amp;request_id=164796122116782246415411&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-1-31769837.142^v3^pc_search_result_control_group,143^v4^control&amp;utm_term=perl%E7%9A%84%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F&amp;spm=1018.2226.3001.4187
+
+
+
+#### 1、**匹配单个字符的元字符**
+
+1. 任意单个字符
+
+   **a.b：**akb	aib	amb
+
+   ```linux
+   [root@localhost ~]# grep "a..b" /etc/passwd
+   tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin
+   lijianhua:x:1000:1000:LIJIanHua:/home/lijianhua:/bin/bash
+   ```
+
+2. [ab]：匹配方括号中任意一个都可以
+
+   ```linux
+   [root@localhost ~]# grep "a[kt]b" /etc/passwd
+   ```
+
+   1. [a-z]：- 表示连续的字符，匹配出任意一个小写字母
+
+      ```linux
+      [root@localhost ~]# grep "a[a-z]b" /etc/passwd
+      
+      [root@localhost ~]# grep "a[a-zA-Z]b" /etc/passwd	//任意一个字母，不区分大小写
+      ```
+
+   2. [0-9]：任意一个数字
+
+      ```linux
+      [root@localhost ~]# grep "a[0-9]b" /etc/passwd
+      ```
+
+   3. [a-zA-Z0-9]：任意一个字母或者数字
+
+      ```linux
+      [root@localhost ~]# grep "a[0-9a-zA-Z]b" /etc/passwd
+      ```
+
+   4. [^abc]：取出除了abc字符以外的
+
+      ```linux
+      [root@localhost ~]# grep "a[^abc]b" /etc/passwd
+      ```
+
+   5. \：转义字符
+
+      ```linux
+      [root@localhost ~]# grep "a\.b"/etc/passwd
+      ```
+
+   
+
+#### 2、**匹配字符出现的次数**a
+
+* *：前一个字符出现任意次
+
+  * .*：任意字符出现任意次
+
+* \？：前一个字符最多出现一次，最少0次，即可有可无
+
+  ```linux
+  [root@localhost ~]# grep "ak\?b" /opt/data/test.txt 
+  ```
+
+* \+：前一个字符至少出现一次
+
+  ```linux
+  [root@localhost ~]# grep "a[0-9]\+b" /opt/data/test.tx
+  ```
+
+* \\{3\\}：前一个字符精确出现三次
+
+  ```linux
+  root@localhost ~]# grep "ak\{3\}b" /opt/data/test.txt 
+  [root@localhost ~]# grep "a[0-9]\{3\}b" /opt/data/test.txt
+  ```
+
+* \\{2,5\\}：前一个字符出现次数最少2次，最多5次
+
+  ```linux
+  [root@localhost ~]# grep "a[0-9]\{2,5\}b" /opt/data/test.txt 
+  ```
+
+* \\\{2,\\}：前一个字符最少出现2次，最多不限
+
+  ```linux
+  [root@localhost ~]# grep "a[0-9]\{2,\}b" /opt/data/test.txt 
+  ```
+
+* a\(ab\)\{2,\}b：ab这个整体在a和b中出现的次数
+
+  ```linux
+  [root@localhost ~]# grep "a\(ab\)\{2,\}b" /opt/data/test.txt 
+  ```
+
+  
+
+#### 3、**匹配字符出现的位置**
+
+* ^root：匹配以root开头的行
+
+  ```linux
+  [root@localhost ~]# grep "^root" /etc/passwd
+  ```
+
+* bash$：匹配以bash结尾的行
+
+  ```linux
+  [root@localhost ~]# grep "bash$" /etc/passwd
+  ```
+
+* ^$：空行
+
+  ```linux
+  [root@localhost ~]# grep "^$" /etc/passwd | wc -l
+  ```
+
+1. 常用选项
+   * -i：忽略大小写
+   
+   * ```shell
+      -B, --before-context=NUM  打印匹配本身以及前面的几个行由NUM控制
+      -A, --after-context=NUM   打印匹配本身以及随后的几个行由NUM控制
+      -C, --context=NUM         打印匹配本身以及随后，前面的几个行由NUM控制
+     ```
+   
+   * **-o：只显示符合条件的内容**
+   
+   * -v：反向过滤
+   
+   * **-e：实现多条件过滤**
+     
+     * **-e 条件1 -e 条件1 -e条件1**
+     
+   * **-n：显示符合条件的行的行号**
+   
+   * **-E：支持扩展正则表达式**
+     * 基本正则表达式：. * []
+     * 扩展正则表达式：（）{} + ？
+
+## 二、find查找
+
+### 1、find命令查找格式
+
+> find 目录名称  条件
+>
+> **find命令也会查找该目录下所有子目录，挨个查一遍，不会只查一层目录，可使用参数 -maxdepth**
+>
+> **find /etc/ -maxdepth 2 -name “*.conf”**
+
+### 2、按文件名称查找
+
+```linux
+[root@localhost etc]# find /etc/ -name "*.conf"  
+```
+
+### 3、按文件大小查找
+
+```linux
+[root@localhost etc]# find /etc/ -size +20k 
+```
+
+### 4、 按文件类型查找
+
+```linux
+[root@localhost etc]# find /etc/ -type f 
+```
+
+* -type：f - l b 
+
+### 5、按文件的修改时间
+
+* -mtime  +2 -2	
+
+  * ```linux
+    [root@localhost etc]# find /etc/ -mtime +2 //2天前修改的文件
+    ```
+
+  * ```linux
+    [root@localhost etc]# find /etc/ -mtime -2	//2天内修改的文件
+    ```
+
+### 6、按文件的创建时间
+
+* -ctime		
+
+  * ```linux
+    [root@localhost etc]# find /etc/ -ctime +2 //2天前创建的文件
+    ```
+
+  * ```linux
+    [root@localhost etc]# find /etc/ -ctime -2 //2天内创建的文件
+    ```
+
+### 7、按多个条件同时查找
+
+* -a：and
+
+  ```linux
+  [root@localhost etc]# find /etc/ -name "*.conf" -a -type f
+  ```
+
+* -o：or
+
+```linux
+[root@localhost etc]# find /etc/ -name "*.conf" -o -type f
+```
+
+
+
+### 7、对查找的文件及进行操作
+
+```linux
+[root@localhost etc]# find /etc/ -name "*.conf" -exec cp -a {} /tmp/ \;
+```
+
+
+
+## 三、tar 文件归档
+
+> * 两种压缩方式压缩比不一样
+
+### 1、gzip    
+
+* 压缩文件
+
+  ```linux
+  [root@localhost ~]# gzip /opt/data/test2.txt
+  [root@localhost ~]# file /opt/data/test2.txt.gz 
+  /opt/data/test2.txt.gz: gzip compressed data, was "test2.txt", from Unix, last modified: Tue Dec 21 22:23:52 2021
+  
+  ```
+
+* 解压缩
+
+  ```linux
+  [root@localhost ~]# gzip -d /opt/data/test2.txt.gz 
+  ```
+
+  
+
+### 2、bzip2
+
+* 压缩文件
+
+  ```linux
+  [root@localhost ~]# bzip2 /opt/data/test2.txt
+  [root@localhost ~]# file /opt/data/test2.txt.bz2 
+  /opt/data/test2.txt.gz: gzip compressed data, was "test2.txt", from Unix, last modified: Tue Dec 21 22:23:52 2021
+  
+  ```
+
+* 解压缩
+
+  ```linux
+  [root@localhost ~]# bzip2 -d /opt/data/test2.txt.bz2 
+  ```
+
+### 3、tar 文件归档
+
+* 创建归档文件
+
+  * tar cf  归档文件.tar  源文件
+  * c：创建
+  * f：指定归档文件名称
+
+* 将/etc/目录下所有文件打包，存入/opt,名称test1.tar
+
+  ```linux
+  tar cvf /opt/test1.tar /etc/			//备份
+  ```
+
+* **tar命令本身没有任何压缩功能，但是支持调用gzip和bzip2**
+
+  * 调用gzip压缩
+
+  ```linux
+  tar zcvf /opt/test1.tar.gz 源文件			//z选项：调用gzip压缩
+  ```
+
+  * 调用bzip2压缩
+
+  ```linux
+  tar jcvf  /opt/test1.tar.bz2  源文件		//j选项：调用bzip2压缩
+  du sh 
+  ```
+
+  * gzip，bzip2，.tar.gzip，.tar.bz2解压缩
+
+    ```linux
+    tar -xvf /opt/test1.tar.gz 
+    tar -xvf /opt/test1.tar.bz2 -C /tmp/			//解压到指定路径 
+    ```
+
+
+## 四、uniq 去重
+
+```linux
+编辑文件
+aaaaaaa
+aaaaaaa
+aaaaaaa
+bbbbbbb
+bbbbbbb
+bbbbbbb
+uniq /opt/file1
+aaaaaaa
+bbbbbbb
+```
+
+## 五、sort 排序
+
+* 对文件中的数据进行排序
+
+```linux
+编辑文件
+.123
+2333
+1233
+31323
+[root@bogon ~]#sort /opt/file1
+//计算机默认排序，按照ACSII码表进行第一位排序，相同则看下一位
+	1133
+	123
+	2333
+	31323
+```
+
+* -n：number 按数字排序
+* -r：倒叙
+
+```linux
+sort -n /opt/file1			//按数字排序
+	123
+	1133
+	2333
+	31323
+```
+
+* -k n：按每行的第n列进行排序
+
+```linux
+sort -n -k 2 /opt/file1			//按每行的第2列进行排序，默认按照空白分列
+```
+
+* -t：指定分隔符
+
+```linux
+aroot@bogon ~]# cat /etc/passwd | sort -n -k 3 -t: | head -1
+admin:x:0:4005::/home/admin:/bin/bash
+```
+
+## 六、alias 别名
+
+* alias 别名=‘命令’			//临时修改，重启会失效
+
+```
+[root@bogon ~]# alias ld='ls -ldh'
+```
+
+* 别名alias永久生效
+  * /etc/bashrc			//针对机器里的所有用户生效，重启机器
+    * source /etc/bashec			//**<font color="red">重新加载配置文件信息</font>**
+  * ~/.bashrc             //只针对当前用户生效
+    * source /etc/bashec			//**<font color="red">重新加载配置文件信息</font>**
+* 删除别名
+  * unalias ld 
+
+## 七、$ 命令引用+date显示时间
+
+* $ () 
+
+```linux
+[root@bogon ~]# mkdir /tmp/$(date +%Y_%m_%d_%T)		//以时间命名文件夹名字
+```
+
+* date +%F_%T
+
+```linux
+[root@bogon ~]# date +%F_%T
+```
+
+* 备份文件要调用时间
+
+```linux
+[root@bogon ~]# tar -zcf /tmp/data_$(date +%Y_%m_%d_%T).tar.gz /etc/
+```
+
+
+
+
+
+## 七、例题
+
+### 1、过滤ip地址
+
+```liux
+[root@localhost ~]# grep "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" /opt/data/test2.txt 
+```
+
+### 2、过滤邮箱
+
+```linux
+[root@localhost ~]# grep -E "[0-9a-zA-Z]{1,}@[0-9a-z]{1,}\.[a-z]{1,}" /opt/data/test2.txt 
+```
+
+
+
+### 3、自己搜集其他常用的
