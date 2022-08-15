@@ -130,6 +130,8 @@ MAINTAINER  <user>  <email>
 
 执行定制的操作，RUN指定的命令在基础镜像中得事先存在
 
+在docker build的时候运行
+
 ```bash
 RUN   cmd1 && cmd2 && cmd3
 ```
@@ -141,6 +143,7 @@ RUN   cmd1 && cmd2 && cmd3
 1. 一个Dockerfile中只能出现一个CMD
 2. `写前台启动服务的指令`
 3. 创建容器时指定的命令会覆盖CMD指令的命令
+4. 在docker run 的时候运行
 
 ```bash
 CMD  /usr/sbin/httpd -D FOREGROUND

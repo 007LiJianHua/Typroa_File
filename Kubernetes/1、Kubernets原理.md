@@ -30,18 +30,31 @@
 #### 1）API Server组件
 
 * API:应用程序接口
-
-* 与etcd数据库进行交互，读写集群状态信息，
+* 与etcd数据库进行交互，读写记录集群状态信息，
 * 接收客户端操作请求，验证身份
 * 接收kubelet发送过来的注册请求
+* 认证授权，访问控制
 
 #### 2）Scheduler 组件
 
-* 调度客户端操作请求，选择合适的Node节点运行资源
+* 调度客户端操作请求，选择合适的Node节点运行资源，调度POD资源
 
 #### 3）Controller Manager组件
 
-* 管理集群控制器，例如replication controller负责维护容器的副本数量
+* 管理集群控制器，例如replication controller负责维护POD、Node的副本数量、
+* 监控集群中的组件信息，
+
+#### 4）etcd组件
+
+* 用来存储k8s的资源状态信息及网络信息，所以要确保etcd高可用
+* 键值对数据库
+* 
+
+#### 5）kubectl组件
+
+* 命令行工具，用来操作k8s中的资源组件，增删改查
+* 可以安装在任何位置，默认控制节点
+* 通过加载config配置文件，来控制整个K8s集群
 
 ### 2、`Node节点`
 
@@ -55,12 +68,24 @@
 
 * 负责整个POD的生命周期
 * 以守护进程的方式存在，并不是以POD的形式存在。（K8s中所有的集群节点都是以POD的方式部署，所以不管是Master节点还是Node节点都会存在）
+*  与API server通信，报告自身状态信息，
 
 #### 3）kube-proxy
 
 * 也会负责端口的自动映射，（服务自动发现，修改防火墙规则，建立映射关系）
-
 * 再多个容器间实现负载均衡
+* pod前端有services，访问的时候先访问services，再由services将请求代理到pod上，其中就是通过kube-proxy，每创建一个serives，kube-proxy就会将serives的IP和端口，记录到iptables/ipvs.
+
+#### 4) Core-dns
+
+* k8s中实现域名解析的组件，
+* 创建services的时候生成FQDN，在k8s内部访问FQDN和访问services的IP是一样的效果，也是通过core-dns实现的
+
+#### 5）Calico
+
+* 实现k8s中不同节点的网络通信
+* 比如我有三个命名空间：开发、测试、生产
+  * 可以通过calico来实现不同的命名空间之间的通信
 
 ### 3、`etcd数据库`
 
@@ -108,16 +133,38 @@
 ### 4、Pod
 
 * kubernets所能管理的最小单元，一个pod中可以放一个容器，也可以放多个容器
-* `pod的设计理念`是支持多个容器再同一个pod中共享网络和文件系统（挂载）
+* `pod的设计理念`是支持**多个容器再同一个pod中共享网络和文件系统**（挂载）
 * k8s集群会为每个pod分配IP、成为podIP
 * 从实际应用角度讲，多数应用都是一个pod中只放一个容器
 * 本质上讲，k8s创建一个pod后，每个pod中存放两个容器，一个是用户自定义的容器，另一个是k8s自动创建的名为pause-amd64的容器，实际上pod的IP是配置在pause容器上的
+
+```bash
+root@xianchaomaster1 ~]# cat pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tomcat-pod
+  namespace: default
+  labels:
+    tomcat:  tomcat-pod
+spec:
+  containers:
+  - name:  tomcat-pod-java
+    ports:
+    - containerPort: 8080
+    image: tomcat:8.5-jre8-alpine
+  imagePullPolicy: IfNotPresent
+
+```
+
+
 
 ### 5、Label 标签
 
 * 一个key-value的键值对的数据结构，用于在k8s集群中识别标识对象，例如每创建一个POD都应该指定一个或多个label
 * 一个对象可以被分配一个label或多个label
-* label分配
+* k8s 通过 Label 可实现多维度的资源分组管理，后续可通过 Label Selector 查询和筛选拥有某些 Label 的资源对象，例如创建一个 Pod，给定一个 Label是app=tomcat，那么service可以通过label selector选择拥有app=tomcat的pod，和其相关联，也可通过 app=tomcat 删除拥有该标签的 Pod 资源。
 
 ### 6、Annotations
 
@@ -132,7 +179,7 @@
 * RC是k8s集群中保证POD高可用的对象，通过监控运行中的POD来保证集群中运行指定数量的POD副本
 * RC通过 Label Selector机制实现对POD副本的自动控制
 
-### 8、Replica Set副本集RS
+### 8、Replicaset副本集RS
 
 * RS是新一代的RC，提供相同的高可用能力
 
@@ -140,9 +187,44 @@
 
 * 通过deployement来管理集群中的RS、POD
 * 在实际操作中，很少直接去操作RS、或者POD在k8s集群中完成对RS和POD 的操作都是通过Deployment完成
-* Deployment自动创建RS保证POD副本
+* 在创建deployement 的时候自动创建RS，再通过rs制定一定数量的副本来创建POD
 * 在升级操作时，Deployment会做滚动升级
-* 在升级操作时，如果检测到失败，会自动回滚
+* Deployment能对Pod扩容、缩容、滚动更新和回滚、维持Pod数量。
+
+```bash
+cat deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment	#指定要创建的资源类型是deployment
+metadata:
+  name: my-nginx
+spec:
+  selector:	#制定标签选择器
+    matchLabels:	#过滤run：my-nginx的标签
+      run: my-nginx
+  replicas: 2	#制定2个副本数量
+  template:
+    metadata:
+      labels:	#制定标签，基于这个deployment控制器创建的POd，全都是这个标签
+        run: my-nginx
+    spec:
+      containers:
+      - name: my-nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+[root@xianchaomaster1 ~]# kubectl apply -f deployment.yaml	#应用yaml文件
+
+[root@xianchaomaster1 ~]# kubectl get deploy | grep my-nginx	#这个时候会创建出来一个deploymen控制器my-nginx
+my-nginx         2/2     2            2           2m52s
+
+[root@xianchaomaster1 ~]# kubectl get rs | grep my-nginx	#也会自动生成一个rs、名字组成是deployment+一串随机数
+my-nginx-5b56ccd65f         2         2         2       3m26s
+
+[root@xianchaomaster1 ~]# kubectl get pods -l run=my-nginx    #最后查看pod的时候可以看到两个pod，因为制定的数量就是两个
+```
+
+![image-20220803203740879](https://saita-ma.oss-cn-beijing.aliyuncs.com/image-20220803203740879.png)
 
 ### 10、HPA  HorizontalPodAutoscaler
 
@@ -154,10 +236,63 @@
 
 ![https://note.youdao.com/yws/public/resource/a897d5553baa8a773767a822821012b0/xmlnote/A772628F1E2F428C9AEB580ACFF1FE8A/42A7519258BE4E86A8B248FC2E6FD8E9/8528](https://s2.loli.net/2022/04/02/hkwlKMGuA8qcpa7.png)
 
-* 将具有相同的label分为一个组，有集群为services分配固定IP，便于用户访问
+* 将具有相同 的label分为一个组，有集群为services分配固定IP，便于用户访问
 * 可以理解为一个services是一组具有相同标签的的POD的集合
 * 由kube-proxy组件实现，kube-proxy创建service类似负载均衡器，后端POD类似real-server
 * POD宕机产生新的POD时，kube-proxy会自动更新etcd数据库关于service与POD的对应关系
+* 客户端在访问的时候先访问services，配合标签选择器选择制定标签的pod，在客户端看来，访问的就是serviexs，
+
+```bash
+#先创建一个pod
+cat pod_test.yaml
+apiVersion: apps/v1
+kind: Deployment	#制定资源类型是deployment
+metadata:
+  name: my-nginx	#deployment的名字
+spec:
+  selector:			#创建一个叫做run: my-nginx的标签选择器
+    matchLabels:
+      run: my-nginx
+  replicas: 2		#制定2个副本
+  template:
+    metadata:
+      labels:		#创建出来的pod全部都打上run：my-nginx 的标签
+        run: my-nginx	
+    spec:
+      containers:
+      - name: my-nginx	#容器名字
+        image: nginx	#镜像
+        ports:
+        - containerPort: 80
+#再创建一个services
+cat service.yaml
+apiVersion: v1
+kind: Service	#制定资源类型是services
+metadata:
+  name: my-nginx	#services的名字
+  labels:
+    run: my-nginx	#指定serives本身的标签 run: my-nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:			#指定关联的标签选择器，即：serives关联哪个标签，这里指定run: my-nginx 的标签选择器。
+run: my-nginx
+#客户端在访问services的IP的时候，识别到serives的标签是run: my-nginx ，再通过标签选择器，去找标签为run：my-nginx 的所有POD
+[root@xianchaomaster1 ~]# kubectl apply -f service.yaml		#应用yaml
+
+[root@xianchaomaster1 ~]# kubectl get svc -l run=my-nginx	#查看services信息
+```
+
+![image-20220803205540995](https://saita-ma.oss-cn-beijing.aliyuncs.com/image-20220803205540995.png)
+
+```bash
+[root@xianchaomaster1 ~]# curl 10.105.104.137		#访问，可以获取到数据
+```
+
+![image-20220803205624988](https://saita-ma.oss-cn-beijing.aliyuncs.com/image-20220803205624988.png)
+
+
 
 ### 12、服务发现
 
@@ -180,7 +315,7 @@
 ### 15、StatefulSet 有状态服务集
 
 * 通过Statefulset创建的Pod，集群会为其分配一个固定的名称，而且该名称创建后是不能修改的、也是集群全局唯一的；用于让构建业务集群的多个Pod间通过名称通信，而不是借助IP，来保证服务的有状态性
-* stateful的实现要依赖于存储volume，例如一个Pod挂载一个独立的存储，该Pod宕机后，自动创建一个新的Pod，新Pod一样会去挂载存储获取数据，这就相当于新Pod继承的原有Pod的所有数据及状态
+* stateful的实现要依赖于存储volume，例如一个Pod挂载一个独立的存储，该Pod宕机后，自动创建一个新的Pod，新Pod一样会去挂载存储获取数据，这就相当于新Pod继承的原有Pod的所有数据及状态 
 * 典型应用场景：数据库集群
 
 ### 16、Volume 卷

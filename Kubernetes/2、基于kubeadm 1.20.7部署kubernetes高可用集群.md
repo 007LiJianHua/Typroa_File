@@ -287,6 +287,14 @@ net.core.somaxconn = 16384
 
 ## 五、所有节点安装kubeadm工具
 
+> **注：每个软件包的作用** 
+>
+> **Kubeadm: kubeadm 是一个工具，用来初始化 k8s 集群的** 
+>
+> **kubelet: 安装在集群所有节点上，用于启动 Pod 的** 
+>
+> **kubectl: 通过 kubectl 可以部署和管理应用，查看各种资源，创建、删除和更新各种组件** 
+
 ### 1、安装kubeadm 1.20.7
 
 ```bash
@@ -305,8 +313,6 @@ KUBELET_EXTRA_ARGS="--pod-infra-container-image=registry.cn-hangzhou.aliyuncs.co
 ```bash
 [root@k8s-master01 ~]# systemctl enable kubelet
 ```
-
-
 
 ## 六、在三个master节点分别安装Haproxy和keepalived(机器不行可跳过)
 

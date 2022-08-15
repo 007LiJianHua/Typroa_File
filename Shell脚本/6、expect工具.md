@@ -1,5 +1,3 @@
-[toc]
-
 # expect工具
 
 ## 一、expect工具

@@ -43,7 +43,7 @@
 * epel仓库主要是用来提供zabbix-server的依赖
 
 ```bash
-[root@zabbix_server ~]# wget  http://mirrors.aliyun.com/repo/epel-7.repo -O /etc/yum.repos.d/epel.repo 
+[root@zabbix_server ~]# wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
 [root@zabbix_server ~]# cat /etc/yum.repos.d/zabbix.repo
 [zabbix]
 name=zabbix
@@ -98,7 +98,6 @@ DBName=zabbix
 DBUser=zabbixuser
 DBPassword=redhat
 DBSocket=/var/lib/mysql/mysql.sock
-
 [root@zabbix_server ~]# systemctl start httpd
 [root@zabbix_server ~]# systemctl start zabbix-server
 [root@zabbix_server ~]# systemctl enable zabbix-server

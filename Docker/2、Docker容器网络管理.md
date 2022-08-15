@@ -2,6 +2,10 @@
 
 ## 一、网络工作模式
 
+> * 安装 docker 的时候，会生成一个 docker0 的虚拟网桥
+> * **每运行一个 docker 容器都会生成一个 veth 设备对，这个 veth 一个接口在容器里，一个接口在物理机上。**
+> * 
+
 ```bash
 [root@localhost ~]# docker network ls 
 NETWORK ID     NAME      DRIVER    SCOPE

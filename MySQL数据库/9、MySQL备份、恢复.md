@@ -210,7 +210,7 @@ mysql> source /mysql/backup/data_2021-06-03_11:00:38.sql;
 
 ### 3、恢复完全备份
 
-1、准备完全备份，将日志中位同步的数据写入到数据文件中
+1、准备完全备份，将日志中未同步的数据写入到数据文件中
 
 ```bash
 innobackex --apply-log <完全备份目录>
@@ -299,7 +299,7 @@ mysql> insert into tutors(Tname) values("userC"),("userD");
 [root@localhost ~]# innobackupex --apply-log --redo-only /mysql/backup/2021-06-03_15-05-57/
 ```
 
-* 一次准备每个增量备份
+* 依次准备每个增量备份
 
 ```bash
 [root@localhost ~]# innobackupex --apply-log --redo-only /mysql/backup/2021-06-03_15-05-57/ --incremental-dir=/mysql/backup/2021-06-03_15-08-11/
@@ -309,7 +309,7 @@ mysql> insert into tutors(Tname) values("userC"),("userD");
 * 恢复数据
 
 ```bash
-[root@localhost ~]# innobackupex --copy-back /mysql/backup/2021-06-03_15-05-57/
+[root@localhost ~]# innobackupex --copyd
 
 [root@localhost ~]# chown -R mysql.mysql /mysql/data/
 ```

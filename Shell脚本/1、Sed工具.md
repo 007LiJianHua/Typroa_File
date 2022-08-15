@@ -1,5 +1,3 @@
-[toc]
-
 # Sed工具
 
 ## 一、sed工具介绍
@@ -48,7 +46,7 @@
 [root@localhost ~]# sed '1,5d' /etc/fstab 
 [root@localhost ~]# sed '/^#/d' /etc/fstab 
 [root@localhost ~]# sed '/^\//d' /etc/fstab 
-[root@localhost ~]# netstat -antp | sed '1,2d‘
+[root@localhost ~]# netstat -antp | sed '1,2d
 ```
 
 * 显示整行
@@ -56,7 +54,7 @@
 
 ```bash
 [root@localhost ~]# sed -n '/^#/p' /etc/fstab 
-
+		
 [root@localhost ~]# df -hT | sed -n '/^\/dev/p'
 ```
 
@@ -93,7 +91,7 @@
   * 合并文件
 
 ```bash
-[root@localhost ~]# sed '$r /etc/hosts' /etc/redhat-release 
+[root@localhost ~]# sed '$r /etc/hosts' /etc/redhat-release 	
 ```
 
 * =	显示行号/统计行数

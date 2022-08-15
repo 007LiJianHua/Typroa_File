@@ -391,3 +391,53 @@ goharbor/prepare
 
 ```
 
+## 六、Harbor的使用
+
+### 1、测试使用harbor私有仓库
+
+* 修改docker配置
+
+```bash
+#添加一行信息，表示我们内网访问 harbor 的时候走的是 http，192.168.40.181 是安装 harbor 机器的 ip
+[root@xianchaomaster1 ~]# vim /etc/docker/daemon.json
+{ "registry-mirrors": ["https://rsbud4vc.mirror.aliyuncs.com","https://registry.dockercn.com","https://docker.mirrors.ustc.edu.cn","https://dockerhub.azk8s.cn","http://hubmirror.c.163.com"],
+"insecure-registries": ["192.168.40.181","harbor"]
+}
+```
+
+* 重新加载docker
+
+```bash
+修改配置之后使配置生效：
+[root@xianchaomaster1 ~]# systemctl daemon-reload && systemctl restart docker
+#查看 docker 是否启动成功
+[root@xianchaomaster1 ~]# systemctl status docker
+```
+
+* 登陆harbor并上传镜像
+
+```bash
+登录 harbor：
+[root@xianchaomaster1]# docker login 192.168.40.181
+Username：admin
+Password: Harbor12345
+输入账号密码之后看到如下，说明登录成功了：
+Login Succeeded
+#导入 tomcat 镜像，tomcat.tar.gz 在课件里
+[root@xianchaomaster1 ~]# docker load -i tomcat.tar.gz
+#把 tomcat 镜像打标签,就是将本地的镜像打了一个标签，
+[root@xianchaomaster1 ~]# docker tag tomcat:latest 192.168.40.181/test/tomcat:v1
+#把 192.168.40.181/test/tomcat:v1 上传到 harbor 里的 test 项目下
+[root@xianchaomaster1 ~]# docker push 192.168.40.181/test/tomcat:v1
+到harbor浏览器刷新，即可看到
+```
+
+* 从harbor服务器下载镜像
+
+```bash
+在 xianchaomaster1 机器上删除镜像
+[root@xianchaomaster1 ~]# docker rmi -f 192.168.40.181/test/tomcat:v1
+拉取镜像
+[root@xianchaomaster1 ~]#docker pull 192.168.40.181/test/tomcat:v1
+```
+

@@ -14,7 +14,7 @@
 >
 > scale out ：提高服务器数量
 
-![https://note.youdao.com/yws/public/resource/2dd243e3793f68efa7840971eb8d1a90/xmlnote/9D8198E2C64A41B4A3C8BE4D32354088/F9536BF97075443AA2FC8F3C4DEFE0A6/13279](https://note.youdao.com/yws/public/resource/2dd243e3793f68efa7840971eb8d1a90/xmlnote/9D8198E2C64A41B4A3C8BE4D32354088/F9536BF97075443AA2FC8F3C4DEFE0A6/13279)
+![image-20220726095534705](https://saita-ma.oss-cn-beijing.aliyuncs.com/image-20220726095534705.png)
 
 ### 2、高可用集群
 

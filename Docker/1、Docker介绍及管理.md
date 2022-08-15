@@ -56,6 +56,25 @@ gpgcheck=0
 [root@localhost ~]# yum install -y docker-ce
 ```
 
+### 2+、开启包转发功能和修改内核参数 
+
+* **内核参数修改：br_netfilter 模块用于将桥接流量转发至 iptables 链，br_netfilter 内核参数需要开启转发。** 
+
+```bash
+[root@test-10 yum.repos.d]# modprobe br_netfilter	#加载模块
+[root@test-10 yum.repos.d]# cat > /etc/sysctl.d/docker.conf << EOF
+> net.bridge.bridge-nf-call-ip6tables = 1
+> net.bridge.bridge-nf-call-ip6tables = 1
+> net.ipv4.ip_forward = 1
+> EOF
+[root@test-10 yum.repos.d]# sysctl -p /etc/sysctl.d/docker.conf 	#使得模块生效
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+```
+
+* 但是开机后加载模块回失效，建议将命令放在/etc/rc.d/rc.local   中
+
 ### 3、启动docker
 
 ```bash
@@ -449,6 +468,14 @@ docker run -tid --volume-from data-volume2 -v /root/backup:/backup --name datavo
 docker run -tid --volume-from data-volume2 -v /root/backup:/backup --name datavolume-copy centos tar zxvf /backup/data-volume2.tar.gz -C /
 ```
 
+### 9、开启特权模式
+
+```bash
+#特权模式就是在启动容器的时候添加 --privileged=true ，容器会使用root权限
+```
+
+
+
 ## 五、容器资源限制
 
 ### 1、查看配置份额的帮助命令：
@@ -482,7 +509,7 @@ CPU shares (relative weight)在创建容器时指定容器所使用的CPU份额�
 >
 > 配和容器中进程运行情况。
 
-### 3、例1：给容器实例分配512权重的cpu使用份额
+### 2、例1：给容器实例分配512权重的cpu使用份额
 
 参数：  --cpu-shares 512
 
@@ -493,7 +520,7 @@ CPU shares (relative weight)在创建容器时指定容器所使用的CPU份额�
 512
 ```
 
-### 4、CPU core核心控制
+### 3、CPU core核心控制
 
 * 创建两个容器docker10与20 ，docker10使用512份额CPU、docker20使用1024份额CPU，都是使用CPU0和CPU1，使用stress压测工具进行测试，注意，为避免虚拟机被压爆，最少也要有4核CPU。
 
@@ -524,6 +551,79 @@ CPU shares (relative weight)在创建容器时指定容器所使用的CPU份额�
 * 另开一个终端，使用top命令，查看，
 
 ![img](https://saita-ma.oss-cn-beijing.aliyuncs.com/img/wps3.png)
+
+### 4、限制内存
+
+* Docker 提供参数-m, --memory=""限制容器的内存使用量。
+
+```bash
+[root@xianchaomaster1 ~]# docker run -it -m 128m centos 
+查看： 
+[root@40bf29765691 /]# cat /sys/fs/cgroup/memory/memory.limit_in_bytes 
+134217728
+```
+
+* 例 2：创建一个 docker，只使用 2 个 cpu 核心，只能使用 128M 内存 
+
+```bash
+[root@xianchaomaster1 ~]# docker run -it --cpuset-cpus 0,1 -m 128m centos 
+```
+
+### 5、限制磁盘IO
+
+```bash
+[root@xianchaomaster1 ~]# docker run --help | grep write-b 
+ --device-write-bps value Limit write rate (bytes per second) to a device 
+(default []) 
+#限制此设备上的写速度（bytes per second），单位可以是 kb、mb 或者 gb。 
+--device-read-bps value #限制此设备上的读速度（bytes per second），单位可以是 kb、mb 或 者 gb。
+```
+
+* 例 1：限制容器实例对硬盘的最高写入速度设定为 2MB/s。 
+
+```bash
+--device 参数：将主机设备添加到容器 
+[root@xianchaomaster1 ~]# mkdir -p /var/www/html/
+#限制容器上的/dev/sda的写速度为2Mb/s
+[root@xianchaomaster1 ~]# docker run -it -v /var/www/html/:/var/www/html --device /dev/sda:/dev/sda --device-write-bps /dev/sda:2mb centos /bin/bash
+ 
+ 注：dd 参数： 
+direct：读写数据采用直接 IO 方式，不走缓存。直接从内存写硬盘上。 
+nonblock：读写数据采用非阻塞 IO 方式，优先写 dd 命令的数据
+[root@bd79042dbdc9 /]# time dd if=/dev/sda of=/var/www/html/test.out bs=2M count=50 oflag=direct,nonblock
+50+0 records in 
+50+0 records out 
+52428800 bytes (52 MB) copied, 50.1831 s, 2.0 MB/s 
+real 0m50.201s 
+user 0m0.001s 
+sys 0m0.303s 
+注： 发现 1 秒写 2M。 限制成功。
+```
+
+### 6、自动释放资源
+
+```bash
+[root@xianchaomaster1 ~]# docker run --help | grep rm 
+ --rm 参数： Automatically remove the container when it exits 
+作用：当容器命令运行结束后，自动删除容器，自动释放资源 
+例： 
+[root@xianchaomaster1 ~]# docker run -it --rm --name xianchao centos sleep 6 
+物理上查看： 
+[root@xianchaomaster1 ~]# docker ps -a | grep xianchao 
+6c75a9317a6b centos "sleep 6" 6 seconds ago Up 4 
+seconds mk 等 5s 后，再查看： 
+[root@xianchaomaster1 ~]# docker ps | grep xianchao #自动删除了
+```
+
+
+
+
+
+
+
+
+
+
 
 ## 六、实战
 

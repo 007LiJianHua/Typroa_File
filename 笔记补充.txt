@@ -1,0 +1,9 @@
+Python自动化运维：https://note.youdao.com/s/9kmCYgOH
+虚拟化应用：https://note.youdao.com/s/B7bUho8a
+应用运维：https://note.youdao.com/s/c7x6N4Db
+基础服务应用：https://note.youdao.com/s/LX4MltCw
+shell脚本：https://note.youdao.com/s/PATkWj7w
+Linux系统管理操作：https://note.youdao.com/s/HVcZ2VE1
+MySQL数据库：https://note.youdao.com/s/Gd0kpNcK
+容器化应用：https://note.youdao.com/s/b9JhYVEC
+K8s：https://note.youdao.com/s/dTk7CRHU
