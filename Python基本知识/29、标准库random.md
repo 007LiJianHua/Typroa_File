@@ -28,14 +28,13 @@ random.seed(1)
 for i in range(5):
     ret = random.randint(1, 10)
     print(ret, end=" ")
-12345678910111213
 ```
 
 输出结果：
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/98b2adadf1624cc289bdf0db67ae2ee8.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5bCP6KKBSVRTdXBlcg==,size_20,color_FFFFFF,t_70,g_se,x_16)
 如上图可以看出：**没有显式设定种子时，每次输出的随机数都是不一样的；显式设定种子时，每次输出的随机数都是一样的**
 
-## random.random()
+### random.random()
 
 > 用于生成一个 0.0 到 1.0 的随机浮点数
 
@@ -47,10 +46,9 @@ for i in range(5):
 0.12720379394341363
 >>> random.random()
 0.9391670189485866
-1234567
 ```
 
-## random.uniform(a,b)
+### random.uniform(a,b)
 
 > 生成一个`[a,b]`之间的随机小数；a, b 取整数 或 浮点数
 
@@ -62,10 +60,9 @@ for i in range(5):
 12.233491150445115
 >>> random.uniform(10, 20)
 11.290566243261305
-1234567
 ```
 
-## random.randint(a,b)
+### random.randint(a,b)
 
 > 生成一个`[a,b]`之间的随机整数
 
@@ -77,10 +74,9 @@ for i in range(5):
 83
 >>> random.randint(10,100)
 66
-1234567
 ```
 
-## random.randrange(start,stop,[step])
+### random.randrange(start,stop,[step])
 
 > 生成一个`[start,stop)`之间以step为步数的随机整数；start,stop,step取整数，step不设时默认值为1
 
@@ -94,7 +90,6 @@ for i in range(5):
 21
 >>> random.randrange(1,100)
 71
-1234567
 ```
 
 随机生成1-100的奇数：
@@ -107,7 +102,6 @@ for i in range(5):
 63
 >>> random.randrange(1,100,2)
 29
-1234567
 ```
 
 随机生成1-100的偶数：
@@ -120,10 +114,9 @@ for i in range(5):
 6
 >>> random.randrange(2,100,2)
 46
-1234567
 ```
 
-## random.getrandbits(k)
+### random.getrandbits(k)
 
 > 生成一个`占内存k位`以内的随机整数；k取长度的整数值
 
@@ -135,10 +128,9 @@ for i in range(5):
 540
 >>> random.getrandbits(10)
 227
-1234567
 ```
 
-## random.choice(seq)
+### random.choice(seq)
 
 > 从序列类型seq中随机返回一个元素；seq取序列类型：如字符串，列表，元组
 
@@ -151,10 +143,9 @@ for i in range(5):
 'f'
 >>> random.choice(list)
 'g'
-12345678
 ```
 
-## random.shuffle(seq)
+### random.shuffle(seq)
 
 > 将序列类型中元素随机排序，返回打乱后序列，seq被改变（`改变原列表`），shuffle为洗牌之意； seq取序列类型：如字符串，列表，元组
 
@@ -170,10 +161,9 @@ for i in range(5):
 >>> random.shuffle(list)
 >>> list
 ['a', 'd', 'g', 'c', 'b', 'f']
-1234567891011
 ```
 
-## random.sample(pop,k)
+### random.sample(pop,k)
 
 > 从pop中选取k个元素，以列表类型返回（`不改变原列表`）；pop取序列类型，k取整数：代表选取个数
 
@@ -189,47 +179,47 @@ for i in range(5):
 12345678
 ```
 
-# 三、不常用函数
+## 三、不常用函数
 
-## random.getstate()
+### random.getstate()
 
 > 捕获并返回生成器当前内部状态的对象，可以把它传递给setstate()函数来把生成器内部状态恢复到调用getstate()函数之前的状态。相当于备份。
 
-## random.setstate(state)
+### random.setstate(state)
 
 > state应为getstate()函数的结果，用来把生成器当前的内部状态恢复为state。
 
-## random.betavariate(alpha, beta)
+### random.betavariate(alpha, beta)
 
 > Beta分布：参数的条件是 alpha > 0 和 beta > 0， 返回值的范围介于 0 和 1 之间。
 
-## random.expovariate(lambd)
+### random.expovariate(lambd)
 
 > 指数分布
 
-## random.gammavariate(alpha, beta)
+### random.gammavariate(alpha, beta)
 
 > Gamma分布：参数的条件是 alpha > 0 和 beta > 0
 
-## random.gauss(mu, sigma)
+### random.gauss(mu, sigma)
 
 > 高斯分布：mu是平均值，sigma是标准差。
 
-## random.normalvariate(mu, sigma)
+### random.normalvariate(mu, sigma)
 
 > 正态分布：mu是平均值，sigma是标准差。
 
-## random.paretovariate(alpha)
+### random.paretovariate(alpha)
 
 > 帕累托分布：alpha是形状参数。
 
-## random.weibullvariate(alpha,beta)
+### random.weibullvariate(alpha,beta)
 
 > 威布尔分布：alpha是比例参数，beta是形状参数。
 
-# 四、真实案例
+## 四、真实案例
 
-## 随机密码字符串
+### 随机密码字符串
 
 > 字符串包括数字和字母， 可以指定密码的位数
 
@@ -268,7 +258,6 @@ print(password2)
 # 生成20位的密码
 password3 = get_random_string(20)
 print(password3)
-12345678910111213141516171819202122232425262728293031323334
 ```
 
 输出结果：
@@ -277,10 +266,9 @@ print(password3)
 41eD76F3e1
 915087432k8443z
 002L5292840A07284755
-123
 ```
 
-## 计算圆周率
+### 计算圆周率
 
 **1）圆周率的近似计算公式：**
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/daefcb40c41148ef8fb87b08b79cadce.png)
@@ -317,7 +305,6 @@ for i in range(1, DARTS + 1):
         hits = hits + 1
 pi = 4 * (hits / DARTS)
 print("圆周率值是：%s" % pi)
-123456789101112
 ```
 
 输出结果：
