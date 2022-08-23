@@ -277,7 +277,7 @@ pull模式不足在于如果Kafka中没有数据，消费者可能会陷入循�
 
 主要采用轮询的方式分配所有的分区，该策略主要实现的步骤：
 
-假设存在三个topic：t0/t1/t2，分别拥有1/2/3个分区，共有6个分区，分别为t0-0/t1-0/t1-1/t2-0/t2-1/t2-2，这里假设我们有三个Consumer，C0、C1、C2，订阅情况为C0：t0，C1：t0、t1，C2：t0/t1/t2。
+假设存在三个topic：`t0/t1/t2`，分别拥有1/2/3个分区，共有6个分区，分别为`t0-0`/`t1-0  t1-1`/`t2-0 t2-1  t2-2`，这里假设我们有三个Consumer，C0、C1、C2，订阅情况为`C0：t0`，`C1：t0、t1`，`C2：t0/t1/t2`。
 
 此时round-robin采取的分配方式，则是按照分区的字典对分区和消费者进行排序，然后对分区进行循环遍历，遇到自己订阅的则消费，否则向下轮询下一个消费者。即按照分区轮询消费者，继而消息被消费。
 
@@ -287,7 +287,7 @@ pull模式不足在于如果Kafka中没有数据，消费者可能会陷入循�
 
 **Range**
 
-Range的重分配策略，首先计算各个Consumer将会承载的分区数量，然后将指定数量的分区分配给该Consumer。假设存在两个Consumer，C0和C1，两个Topic，t0和t1，这两个Topic分别都有三个分区，那么总共的分区有6个，t0-0，t0-1，t0-2，t1-0，t1-1，t1-2。分配方式如下：
+Range的重分配策略，**首先计算各个Consumer将会承载的分区数量**，然后将指定数量的分区分配给该Consumer。假设存在两个Consumer，C0和C1，两个Topic，t0和t1，这两个Topic分别都有三个分区，那么总共的分区有6个，t0-0，t0-1，t0-2，t1-0，t1-1，t1-2。分配方式如下：
 
 - range按照topic一次进行分配，即消费者遍历topic，t0，含有三个分区，同时有两个订阅了该topic的消费者，将这些分区和消费者按照字典序排列。
 - 按照平均分配的方式计算每个Consumer会得到多少个分区，如果没有除尽，多出来的分区则按照字典序挨个分配给消费者。按照此方式以此分配每一个topic给订阅的消费者，最后完成topic分区的分配。
@@ -307,7 +307,7 @@ Range的重分配策略，首先计算各个Consumer将会承载的分区数量�
 ```shell
 # 利用__consumer_offsets读取数据
 ./kafka-console-consumer.sh --topic __consumer_offsets --bootstrap-server 192.168.233.129:19092,192.168.233.129:19093,192.168.233.129:19094  --formatter "kafka.coordinator.group.GroupMetadataManager\$OffsetsMessageFormatter" --consumer.config ../config/consumer.properties --from-beginning
-12
+
 ```
 
 ### 3.3 消费者组案例
@@ -322,7 +322,6 @@ group.id=xxxx
 # 启动生产者
 ./kafka-console-producer.sh --broker-list 192.168.233.129:19092 --topic test
 # 发送消息
-1234567
 ```
 
 **结果图**
@@ -347,7 +346,7 @@ Kafka的producer生产数据，需要写入到log文件中，写的过程是追�
 
 ![非零拷贝技术](https://img-blog.csdnimg.cn/img_convert/5ff16bb053cc3438fc90d7663a5997fb.png)
 
-> 这一段内容参考：[Kafka的零拷贝技术](https://www.jianshu.com/p/835ec2d4c170)
+> 这一段	内容参考：[Kafka的零拷贝技术](https://www.jianshu.com/p/835ec2d4c170)
 
 这是常规的读取操作：
 
@@ -358,7 +357,7 @@ Kafka的producer生产数据，需要写入到log文件中，写的过程是追�
 
 ![零拷贝技术](https://img-blog.csdnimg.cn/img_convert/8901a592e01c965edd7002fa3967a76e.png)
 
-- 零拷贝技术只用将磁盘文件的数据复制到页面缓存中一次，然后将数据从页面缓存直接发送到网络中（发送给不同的订阅者时，都可以使用同一个页面缓存），从而避免了重复复制的操作。
+- 零拷贝技术只用将`磁盘文件的数据`复制到`页面缓存`中一次，然后将数据`从页面缓存`直接发送到`网络`中（**发送给不同的订阅者时，都可以使用同一个页面缓存**），从而避免了重复复制的操作。
 
 > 如果有10个消费者，传统方式下，数据复制次数为4*10=40次，而使用“零拷贝技术”只需要1+10=11次，一次为从磁盘复制到页面缓存，10次表示10个消费者各自读取一次页面缓存。
 
@@ -428,7 +427,6 @@ public class CustomProducer {
         producer.close();
     }
 }
-1234567891011121314151617181920212223242526272829303132333435
 ```
 
 - `BATCH_SIZE_CONFIG = "batch.size"`：消息为`batch.size`大小，生产者才发送消息
@@ -481,7 +479,6 @@ public class CallBackProducer {
         producer.close();
     }
 }
-12345678910111213141516171819202122232425262728293031323334
 ```
 
 ### 6.3 生产者分区策略测试
@@ -495,7 +492,6 @@ public ProducerRecord(String topic, Integer partition, K key, V value, Iterable<
 public ProducerRecord(String topic, Integer partition, K key, V value) {};
 public ProducerRecord(String topic, K key, V value) {};
 public ProducerRecord(String topic, V value) {};
-123456
 ```
 
 上面`ProducerRecord`中的`partition`参数即为指定的分区(分区是有编号的，这是指定分区中的某一个，实际应该为一个分区编号)。
