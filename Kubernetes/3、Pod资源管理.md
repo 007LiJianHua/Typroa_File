@@ -426,3 +426,509 @@ rolebindings                             rbac.authorization.k8s.io/v1   true    
 roles                                    rbac.authorization.k8s.io/v1   true         Role
 ```
 
+#### 5.4、namespace 资源限额 
+
+> * namespace 是命名空间，里面有很多资源，那么我们可以对`命名空间资源`做个限制，防止该命名空间部署的资源超过限制。
+
+```yaml
+[root@master ~]# cat namespace-quota.yaml 
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mem-cpu-quota
+  namespace: test
+spec:
+  hard:
+    requests.cpu: "2"		#分配的CPU和内存
+    requests.memory: 2Gi
+    limits.cpu: "4"		#最大限制
+    limits.memory: 4Gi
+```
+
+> * 创建的 ResourceQuota 对象将在 test 名字空间中添加以下限制： 
+>   * 每个容器必须设置内存请求（memory request），内存限额（memory limit），
+>   * cpu 请求（cpu request）和 cpu 限额（cpu limit）。 
+>
+> * 所有容器的内存请求总额不得超过 2GiB。 
+> *  所有容器的内存限额总额不得超过 4 GiB。
+> *  所有容器的 CPU 请求总额不得超过 2 CPU。 
+> *  所有容器的 CPU 限额总额不得超过 4CPU。 
+
+* 创建 pod 时候必须设置资源限额，否则创建失败，如下： 
+
+```yaml
+[root@master1 ~]# vim pod-test.yaml 
+apiVersion: v1 
+kind: Pod 
+metadata: 
+  name: pod-test 
+  namespace: test 
+  labels: 
+    app: tomcat-pod-test 
+spec: 
+  containers: 
+  - name:  tomcat-test 
+  ports: 
+  - containerPort: 8080 
+  image: xianchao/tomcat-8.5-jre8:v1 
+  imagePullPolicy: IfNotPresent 
+  resources: 
+    requests: 
+      memory: "100Mi" 
+      cpu: "500m" 
+    limits: 
+      memory: "2Gi" 
+      cpu: "2" 
+```
+
+### 6、标签
+
+#### 6.1、什么是标签？ 
+
+> 标签其实就一对 `key/value` ，被关联到对象上，比如 Pod,标签的使用我们倾向于能够表示对象的特殊特点，就是一眼就看出了这个 Pod 是干什么的，**标签可以用来划分特定的对象**（比如版本，服务类型等），标签可以在创建一个对象的时候直接定义，也可以在后期随时修改，每一个对象可以拥有多个标签，但是，key 值必须是唯一的。创建标签之后也可以方便我们对资源进行分组管理。如果对 pod 打标签，之后就可以使用标签来查看、删除指定的 pod。 
+
+#### 6.2、 给 pod 资源打标签 
+
+* 对已经存在的资源打标签
+
+```bash
+[root@master1~]# kubectl label pods pod-first  release=v1 
+```
+
+* 查看标签是否打成功
+
+```bash
+[root@master1~]# kubectl get pods pod-first --show-labels 
+#显示如下,显示如下，说明标签达成功了； 
+NAME         READY   STATUS    RESTARTS   AGE   LABELS 
+pod-first    1/1     Running   1          21h   release=v1, app=tomcat-pod-first 
+```
+
+#### 6.3、查看资源标签 
+
+* 查看默认名称空间下所有 pod 资源的标签 
+
+```bash
+[root@master1~]# kubectl get pods --show-labels 
+```
+
+* 查看默认名称空间下指定 pod 具有的所有标签 
+
+```bash
+[root@master1~]# kubectl get pods pod-first --show-labels 
+```
+
+* 列出默认名称空间下标签 key 是 release 的 pod，不显示标签 
+
+```bash
+[root@master1~]# kubectl get pods -l release 
+```
+
+* 列出默认名称空间下标签 key 是 release、值是 v1 的 pod，不显示标签 
+
+```bash
+[root@master1~]# kubectl get pods -l release=v1 
+```
+
+* 列出默认名称空间下标签 key 是 release 的所有 pod，并打印对应的标签值 
+
+```bash
+[root@master1~]# kubectl get pods -L release 
+```
+
+* 查看所有名称空间下的所有 pod 的标签 
+
+```bash
+[root@master1 ~]# kubectl get pods --all-namespaces --show-labels 
+```
+
+### 7、node 节点选择器 
+
+> 我们在创建 pod 资源的时候，pod 会根据 schduler 进行调度，那么默认会调度到随机的一个工作节点，如果我们想要 pod 调度到指定节点或者调度到一些具有相同特点的 node 节点，怎么办呢？ 
+>
+> 可以使用 pod 中的` nodeName `或者` nodeSelector` 字段指定要调度到的 node 节点 
+
+#### 7.1、nodeName： 
+
+* 把 tomcat.tar.gz 上传到node1 和 node2，手动解压： 
+
+```bash
+[root@node1 ~]# docker load -i tomcat.tar.gz 
+Loaded image: tomcat:8.5-jre8-alpine 
+[root@node2 ~]# docker load -i tomcat.tar.gz 
+Loaded image: tomcat:8.5-jre8-alpine 
+```
+
+* 把 busybox.tar.gz 上传到 node1 和 node2，手动解压： 
+
+```bash
+[root@node1 ~]# docker load -i busybox.tar.gz 
+[root@node2 ~]# docker load -i busybox.tar.gz 
+```
+
+* 编写pod-node.yaml
+
+```bash
+[root@master ~]# cat pod-node.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod
+  namespace: default
+  labels:
+    app: myapp
+    env: dev
+spec:
+  nodeName: node2.linux.com
+  containers:
+  - name:  tomcat-pod-java
+    ports:
+    - containerPort: 8080
+    image: tomcat:8.5-jre8-alpine
+    imagePullPolicy: IfNotPresent
+  - name: busybox
+    image: busybox:latest
+    command:
+    - "/bin/sh"
+    - "-c"
+    - "sleep 3600"
+    
+[root@master ~]# kubectl apply -f pod-node.yaml 
+pod/demo-pod created
+```
+
+```bash
+#查看 pod 调度到哪个节点 
+[root@master1 ~]# kubectl get pods  -o wide 
+NAME             READY   STATUS    RESTARTS 
+demo-pod        1/1     Running   0            node1 
+```
+
+#### 7.2、nodeSelector： 
+
+> 指定 pod 调度到具有哪些标签的 node 节点上 
+
+* 给 node 节点打标签，打个具有 disk=ceph 的标签 
+
+```bash
+[root@master1 ~]# kubectl label nodes node2 disk=ceph 
+node/node2 labeled 
+```
+
+* 定义 pod 的时候指定要调度到具有 disk=ceph 标签的 node 上
+
+```yaml
+[root@master ~]# cat pod-1.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod-1
+  namespace: default
+  labels:
+    app: myapp
+    env: dev
+spec:
+  nodeSelector:
+    disk: ceph
+  containers:
+  - name:  tomcat-pod-java
+    ports:
+    - containerPort: 8080
+    image: tomcat:8.5-jre8-alpine
+    imagePullPolicy: IfNotPresent
+```
+
+* 查看pod调度到哪个节点
+
+```bash
+[root@master1 ~]# kubectl apply -f pod-1.yaml 
+[root@master1 ~]# kubectl get pods  -o wide 
+NAME             READY   STATUS    RESTARTS 
+demo-pod-1        1/1     Running   0            node2 
+```
+
+### 8、污点和容忍度 
+
+#### 8.1、node 节点亲和性 
+
+> `node 节点亲和性调度：nodeAffinity `
+
+* 可以通过`explain`来查看yaml语法
+
+```bash
+[root@master node]# kubectl explain pods.spec.affinity 
+KIND:     Pod
+VERSION:  v1
+
+RESOURCE: affinity <Object>
+
+DESCRIPTION:
+     If specified, the pod's scheduling constraints
+
+     Affinity is a group of affinity scheduling rules.
+
+FIELDS:
+   nodeAffinity <Object>
+     Describes node affinity scheduling rules for the pod.
+
+   podAffinity  <Object>
+     Describes pod affinity scheduling rules (e.g. co-locate this pod in the
+     same node, zone, etc. as some other pod(s)).
+
+   podAntiAffinity      <Object>
+     Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod
+     in the same node, zone, etc. as some other pod(s)).
+[root@master1 ~]#  kubectl explain  pods.spec.affinity.nodeAffinity 
+KIND:     Pod
+VERSION:  v1
+
+RESOURCE: nodeAffinity <Object>
+FIELDS:
+   preferredDuringSchedulingIgnoredDuringExecution      <[]Object>  # prefered 表示有节点尽量满足这个位置定义的亲和性，这不是一个必须的条件，软亲和性 
+
+   requiredDuringSchedulingIgnoredDuringExecution       <Object>	#require 表示必须有节点满足这个位置定义的亲和性，这是个硬性条件，硬亲和性 
+```
+
+* 例 1：使用 `requiredDuringSchedulingIgnoredDuringExecution `硬亲和性 
+
+* 把 myapp-v1.tar.gz 上传到 node2 和 node1 上，手动解压： 
+
+```bash
+[root@node1 ~]# docker load -i myapp-v1.tar.gz 
+Loaded image: ikubernetes/myapp:v1 
+[root@node2 ~]# docker load -i myapp-v1.tar.gz 
+Loaded image: ikubernetes/myapp:v1 
+```
+
+* 查看yaml文件
+
+```yaml
+[root@master node]# cat pod-nodeaffinity-demo.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+        name: pod-node-affinity-demo
+        namespace: default
+        labels:
+            app: myapp
+            tier: frontend
+spec:
+    containers:
+    - name: myapp
+      image: ikubernetes/myapp:v1
+    affinity:
+         nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+                   nodeSelectorTerms:
+                   - matchExpressions:
+                     - key: zone		#必须满足key是zone
+                       operator: In		#In表示=
+                       values:
+                       - foo		#value为foo或者bar
+                       - bar
+```
+
+* 我们检查当前节点中有任意一个节点拥有` zone 标签`的`值是 foo 或者 bar`，就可以把 pod 调度到这个 node 节点的 foo 或者 bar 标签上的节点上 
+
+```bash
+[root@master1 ~]# kubectl apply -f pod-nodeaffinity-demo.yaml 
+[root@master node]# kubectl get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+demo-pod                      2/2     Running   1          61m
+demo-pod-1                    1/1     Running   0          47m
+nginx-7f466444dc-f55dn        1/1     Running   0          9d
+nginx-7f466444dc-zxpfp        1/1     Running   0          9d
+nginx-test-75c685fdb7-njjm2   1/1     Running   0          7d
+nginx-test-75c685fdb7-tm98h   1/1     Running   0          7d
+pod-node-affinity-demo        0/1     Pending   0          7s
+tomcat-test                   1/1     Running   0          7d1h
+#发现是pending挂起状态，因为没有一个拥有 zone 的标签的值是 foo 或者 bar，而且使用的是硬亲和性，必须满足条件才能完成调度 
+```
+
+* 给这个 node1 节点打上标签 zone=foo，在查看 
+
+```bash
+[root@master1 ~]# kubectl label nodes node1 zone=foo 
+[root@master1 ~]#kubectl get pods -o wide 显示如下： 
+pod-node-affinity-demo             1/1     Running  0   node1 
+```
+
+* 例 2：使用` preferredDuringSchedulingIgnoredDuringExecution `软亲和性 
+
+```yaml
+[root@master node]# cat pod-nodeaffinity-demo-2.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+        name: pod-node-affinity-demo-2
+        namespace: default
+        labels:
+            app: myapp
+            tier: frontend
+spec:
+    containers:
+    - name: myapp
+      image: ikubernetes/myapp:v1
+    affinity:
+        nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+               matchExpressions:
+               - key: zone1
+                 operator: In
+                 values:
+                 - foo1
+                 - bar1
+              weight: 60
+             
+```
+
+```bash
+[root@master1 ~]# kubectl apply -f pod-nodeaffinity-demo-2.yaml 
+[root@master1 ~]# kubectl get pods -o wide |grep demo-2 
+pod-node-affinity-demo-2           1/1     Running     0        node1 
+#上面说明软亲和性是可以运行这个 pod 的，尽管没有运行这个 pod 的节点定义的 zone1 标签 Node 节点亲和性针对的是 pod 和 node 的关系，Pod 调度到 node 节点的时候匹配的条件 
+```
+
+#### 8.2、Pod 节点亲和性 
+
+* pod 自身的亲和性调度有两种表示形式
+
+> * `podaffinity`：pod 和 pod 更倾向腻在一起，把相近的 pod 结合到相近的位置，如同一区域，同一机架，这样的话 pod 和 pod 之间更好通信，比方说有两个机房，这两个机房部署的集群有 1000 台主机，那么我们希望把 nginx 和 tomcat 都部署同一个地方的 node 节点上，可以提高通信效率； 
+>
+> * `podunaffinity`：pod 和 pod 更倾向不腻在一起，如果部署两套程序，那么这两套程序更倾向于反亲和性，这样相互之间不会有影响。 
+> * 第一个 pod 随机选则一个节点，做为评判后续的 pod 能否到达这个 pod 所在的节点上的运行方式，这就称为 **pod 亲和性**；
+> * 我们怎么判定哪些节点是相同位置的，哪些节点是不同位置的；我们在定义 pod 亲和性时需要有一个前提，哪些 pod 在同一个位置，哪些 pod 不在同一个位置，这个位置是怎么定义的，标准是什么？
+> * **以节点名称为标准**，这个节点名称相同的表示是同一个位置，节点名称不相同的表示不是一个位置。 
+
+```bash
+[root@master node]# kubectl explain pods.spec.affinity.podAffinity 
+KIND:     Pod
+VERSION:  v1
+
+RESOURCE: podAffinity <Object>
+
+FIELDS:
+   preferredDuringSchedulingIgnoredDuringExecution      <[]Object>	#软亲和性 
+
+   requiredDuringSchedulingIgnoredDuringExecution       <[]Object>	#硬亲和性 
+```
+
+> 位置拓扑的键，这个是必须字段 
+>
+> 怎么判断是不是同一个位置： 
+>
+> `rack=rack1` 
+>
+> `row=row1` 
+>
+> 使用 rack 的键是同一个位置 
+>
+> 使用 row 的键是同一个位置 
+>
+> * labelSelector： 
+>   * 我们要判断 pod 跟别的 pod 亲和，跟哪个 pod 亲和，需要靠 labelSelector，通过 labelSelector
+>   * 选则一组能作为亲和对象的 pod 资源 
+>
+> namespace： 
+>
+> * labelSelector 需要选则一组资源，那么这组资源是在哪个名称空间中呢，通过 namespace 指定，
+> * 如果不指定 namespaces，那么就是**当前创建 pod 的名称空间** 
+
+* 例 1：pod 节点亲和性 
+
+> 定义两个 pod，第一个 pod 做为基准，第二个 pod 跟着它走 
+
+```yaml
+[root@master node]# cat pod-required-affinity-demo.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-first
+  labels:
+    app2: myapp2		#创建的第一个pod具有两个标签
+    tier: frontend
+spec:
+    containers:
+    - name: myapp
+      image: ikubernetes/myapp:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-second
+  labels:
+    app: backend	#创建的第二个pod具有和之前pod不一样的标签
+    tier: db
+spec:
+    containers:
+    - name: busybox
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sh","-c","sleep 3600"]
+    affinity:
+      podAffinity:
+         requiredDuringSchedulingIgnoredDuringExecution:	#硬亲和性
+         - labelSelector:		
+              matchExpressions:		#创建标签选择器
+              - {key: app2, operator: In, values: ["myapp2"]}	#指定和app2=myapp2硬亲和
+           topologyKey: kubernetes.io/hostname		#跟着第一个pod去选择相同节点的机器
+```
+
+* 上面表示创建的 pod 必须与拥有 app=myapp 标签的 pod 在一个节点上 
+
+```bash
+[root@master1 ~]# kubectl apply -f pod-required-affinity-demo.yaml 
+kubectl get pods -o wide 显示如下： 
+pod-first              running        node1 
+pod-second           running        node1 
+```
+
+* 上面说明第一个 pod 调度到哪，第二个 pod 也调度到哪，这就是 pod 节点亲和性 
+
+```bash
+[root@master1 ~]# kubectl delete -f pod-required-affinity-demo.yaml 
+注意： 
+[root@master1 ~]# kubectl get nodes --show-labels 
+```
+
+* 例 2：pod 节点反亲和性 
+
+>  定义两个 pod，第一个 pod 做为基准，第二个 pod 跟它调度节点相反 
+
+```yaml
+[root@master node]# cat pod-required-anti-affinity-demo.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-first
+  labels:
+    app1: myapp1
+    tier: frontend
+spec:
+    containers:
+    - name: myapp
+      image: ikubernetes/myapp:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-second
+  labels:
+    app: backend
+    tier: db
+spec:
+    containers:
+    - name: busybox
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sh","-c","sleep 3600"]
+    affinity:
+      podAntiAffinity:
+         requiredDuringSchedulingIgnoredDuringExecution:
+         - labelSelector:
+              matchExpressions:
+              - {key: app1, operator: In, values: ["myapp1"]}
+           topologyKey: kubernetes.io/hostname
+```
+

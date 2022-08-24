@@ -415,7 +415,7 @@ export LANG=en_us.UTF-8
 >         do
 >             echo ${var}
 >         done
->      
+>
 >     [root@localhost code]# ./test a b c d	#这里输出了4次
 >     a
 >     b
@@ -438,7 +438,36 @@ export LANG=en_us.UTF-8
 >     [root@localhost code]#
 >     ```
 >
+> * $* 与 $@ 区别：
+>
+>   - 相同点：都是引用所有参数。
+>
+>   - 不同点：只有在双引号中体现出来。假设在脚本运行时写了三个参数 1、2、3，，则 " * " 等价于 "1 2 3"（传递了一个参数），而 "@" 等价于 "1" "2" "3"（传递了三个参数）。
+>
+>   - ```bash
+>     #!/bin/bash
+>     # author:菜鸟教程
+>     # url:www.runoob.com
 >     
+>     echo "-- \$* 演示 ---"
+>     for i in "$*"; do
+>         echo $i
+>     done
+>     
+>     echo "-- \$@ 演示 ---"
+>     for i in "$@"; do
+>         echo $i
+>     done
+>     
+>     $ chmod +x test.sh 
+>     $ ./test.sh 1 2 3
+>     -- $* 演示 ---
+>     1 2 3
+>     -- $@ 演示 ---
+>     1
+>     2
+>     3
+>     ```
 
 
 
