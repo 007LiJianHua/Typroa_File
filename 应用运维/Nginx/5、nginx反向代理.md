@@ -19,7 +19,7 @@ location /mp3 {
 ```
 
 * 示例2：将/testA的请求转交给后端首页处理
-  * 注意：http:地址/这个/就代表了网页首页
+  * 注意：http:地址`/`这个`/`就代表了网页首页
 
 ```bash
 location /testA {
