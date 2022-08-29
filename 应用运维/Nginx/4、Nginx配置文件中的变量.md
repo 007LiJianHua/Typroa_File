@@ -107,7 +107,7 @@ hello world
 
 ## 四、uri 和 request_uri
 
-   由 ngx_http_core 模块提供的内建变量 uri，可以用来获取当前请求的 URI（不含请求参数）， 而 request_uri 则用来获取请求最原始的 URI（包含请求参数）。
+   由 `nginx_http_core` 模块提供的内建变量 uri，可以用来获取当前请求的 URI（不含请求参数）， 而 `request_uri `则用来获取请求最原始的 URI（包含请求参数）。
 
 示例（无echo模块需先加载）
 
@@ -136,7 +136,7 @@ request_uri = /test-uri/hello%20world?a=3&b=4
 
 ## 五、$arg_XXX
 
-  另一个特别常用的内建变量其实并不是单独一个变量，而是有无限多变种的一群变量，即名字以 arg_ 开头的所有变量，我们估且称之为 arg_XXX 变量群。
+  **另一个特别常用的内建变量其实并不是单独一个变量，而是有无限多变种的一群变量，即名字以 arg_ 开头的所有变量，我们估且称之为 arg_XXX 变量群。**
 
 ```shell
 [root@cheng ~]# cd /etc/nginx/conf.d/

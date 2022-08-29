@@ -1,5 +1,12 @@
 [toc]
 
+
+
+
+
+> * **内存泄露**：申请使用完的内存没有释放，导致虚拟机不能再次使用该内存，此时这段内存就泄露了，因为申请者不用了，而又不能被虚拟机分配给别人用。
+> * **内存溢出**：申请的内存超出了JVM能提供的内存大小，此时称之为溢出。
+
 ## 一、Redis的缓存穿透
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210126195904746.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MzgyOTQ0Mw==,size_16,color_FFFFFF,t_70)

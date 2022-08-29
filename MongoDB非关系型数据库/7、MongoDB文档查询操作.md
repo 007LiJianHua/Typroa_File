@@ -40,9 +40,9 @@ db.sang_collect.find({},{x:1,_id:0})
 
 此时返回的数据中就不包括`_id`字段了。
 
-## 各种查询条件
+### 2、各种查询条件
 
-### 比较运算符
+#### 1、比较运算符
 
 这里的比较运算符都比较好理解，如下表：
 
@@ -118,7 +118,9 @@ db.sang_collect.find({score:{$lte:100,$gte:90}})
 db.sang_collect.find({score:{$ne:90}})
 ```
 
-### nin
+#### 2、条件运算符
+
+##### $in
 
 $in有点类似于SQL中的in关键字，表示查询某一个字段在某一个范围中的所有文档，比如我想查询**x为1或者2**的所有文档，如下：
 
@@ -132,7 +134,7 @@ in恰好相反，表示查询某一个字段不在某一个范围内的所有文
 db.sang_collect.find({x:{$nin:[1,2]}})
 ```
 
-### $or
+##### $or
 
 $or有点类似于SQL中的or关键字，表示多个查询条件之间是**或**的关系，比如我想查询x为1或者y为99的文档，如下：
 
@@ -140,7 +142,7 @@ $or有点类似于SQL中的or关键字，表示多个查询条件之间是**或*
 db.sang_collect.find({$or:[{x:1},{y:99}]})
 ```
 
-### $type
+##### $type
 
 $type可以用来根据数据类型查找数据，比如我想要查找x类型为数字的文档，如下：
 
@@ -173,7 +175,7 @@ db.sang_collect.find({x:{$type:1}})
 | Min key                | -1       | minKey              |      |
 | Max key                | 127      | maxKey              |      |
 
-### $not
+##### $not
 
 $not用来执行取反操作，比如我想要查询所有x的类型不为数字的文档，如下：
 
@@ -181,7 +183,7 @@ $not用来执行取反操作，比如我想要查询所有x的类型不为数字
 db.sang_collect.find({x:{$not:{$type:1}}})
 ```
 
-### $and
+##### $and
 
 $and类似于SQL中的and，比如我想查询y大于98并且小于100的数据，如下：
 
@@ -194,3 +196,220 @@ db.sang_collect.find({$and:[{y:{$gt:98}},{y:{$lt:100}}]})
 ```json
 db.sang_collect.find({y:{$lt:100,$gt:98}})
 ```
+
+#### 3、null
+
+null的查询稍微有点不同，假如我想查询z为null的数据，如下：
+
+```c
+db.sang_collect.find({z:null})
+```
+
+这样不仅会查出z为null的文档，也会查出所有没有z字段的文档，如果只想查询z为null的字段，那就再多加一个条件，判断一下z这个字段存在不，如下：
+
+```c++
+db.sang_collect.find({z:{$in:[null],$exists:true}})
+```
+
+### 3、正则表达式查询
+
+使用正则表达式查询我们在前面也已经介绍过了，这里的正则表达式语法和JavaScript中的正则表达式语法一致，比如`查询所有key为x，value以hello开始的文档且不区分大小写`：
+
+```c
+db.sang_collec.find({x:/^(hello)(.[a-zA-Z0-9])+/i})
+```
+
+### 4、数组查询
+
+假设我有一个数据集如下：
+
+```c
+{
+    "_id" : ObjectId("59f1ad41e26b36b25bc605ae"),
+    "books" : [ 
+        "三国演义", 
+        "红楼梦", 
+        "水浒传"
+    ]
+}
+```
+
+查询books中含有三国演义的文档，如下：
+
+```c
+db.sang_collect.find({books:"三国演义"})
+```
+
+如果要查询既有三国演义又有红楼梦的文档，可以使用$all，如下：
+
+```c
+db.sang_collect.find({books:{$all:["三国演义","红楼梦"]}})
+```
+
+当然我们也可以使用精确匹配，比如查询books为`"三国演义","红楼梦", "水浒传"`的数据，如下：
+
+```c
+db.sang_collect.find({books:["三国演义","红楼梦", "水浒传"]})
+```
+
+不过这种就会一对一的精确匹配。
+
+也可以按照下标匹配，比如我想查询数组中下标为2的项的为`"水浒传"`的文档，如下：
+
+```c
+db.sang_collect.find({"books.2":"水浒传"})
+```
+
+也可以按照数组长度来查询，比如我想查询数组长度为3的文档：
+
+```c
+db.sang_collect.find({books:{$size:3}})
+```
+
+如果想查询数组中的前两条数据，可以使用$slice，如下：
+
+```c
+db.sang_collect.find({},{books:{$slice:2}})
+```
+
+注意这里要写在find的第二个参数的位置。`2表示数组中前两个元素`，`-2表示从后往前数两个元素`。也可以截取数组中间的元素，比如查询数组的第二个到第四个元素：
+
+```c
+db.sang_collect.find({},{books:{$slice:[1,3]}})
+```
+
+数组中的与的问题也值得说一下，假设我有如下数据：
+
+```c
+{
+    "_id" : ObjectId("59f208bc7b00f982986c669c"),
+    "x" : [ 
+        5.0, 
+        25.0
+    ]
+}
+```
+
+我想将数组中value取值在(10,20)之间的文档获取到，如下操作：
+
+```c
+db.sang_collect.find({x:{$lt:20,$gt:10}})
+```
+
+此时上面这个文档虽然不满足条件却依然被查找出来了，因为`5<20`，而`25>10`，要解决这个问题，我们可以使用$elemMatch，如下：
+
+```c
+db.sang_collect.find({x:{$elemMatch:{$lt:20,$gt:10}}})
+```
+
+`$elemMatch`要求MongoDB同时使用查询条件中的两个语句与一个数组元素进行比较。
+
+### 5、嵌套文档查询
+
+嵌套文档有两种查询方式，比如我的数据如下：
+
+```c
+{
+    "_id" : ObjectId("59f20c9b7b00f982986c669f"),
+    "x" : 1.0,
+    "y" : {
+        "z" : 2.0,
+        "k" : 3.0
+    }
+}
+```
+
+想要查询上面这个文档，我的查询语句如下：
+
+```c
+db.sang_collect.find({y:{z:2,k:3}})
+```
+
+但是这种写法要求严格匹配，顺序都不能变，假如写成了`db.sang_collect.find({y:{k:3,z:2}})`，就匹配不到了，因此这种方法不够灵活，我们一般推荐的是下面这种写法：
+
+```c
+db.sang_collect.find({"y.z":2,"y.k":3})
+```
+
+这种写法可以任意颠倒顺序。
+
+### 6、游标
+
+游标这个概念在很多地方都有，Java中JDBC里的ResultSet，Android中的Cursor等等都是，MongoDB中也有类似的概念。当我们调用find方法时，就可以返回一个游标，如下：
+
+```c
+var cursor = db.sang_collect.find();
+```
+
+游标中有hasNext()方法，也有next()方法，这两个方法结合可以用来遍历结果，如下：
+
+```c
+while(cursor.hasNext()){
+    print(cursor.next())
+}
+```
+
+#### next()
+
+方法可以获取查询到的每一个文档，如下：
+
+```c
+{
+    "_id" : ObjectId("59f299579babb96c21ddc9e8"),
+    "x" : 0.0,
+    "y" : 1000.0
+}
+
+/* 2 */
+{
+    "_id" : ObjectId("59f299579babb96c21ddc9e9"),
+    "x" : 1.0,
+    "y" : 999.0
+}
+```
+
+如果我只想获取文档中的某一个字段，可以按如下方式：
+
+```c
+while(cursor.hasNext()){
+    print(cursor.next().y)
+}
+```
+
+cursor也实现了JavaScript中的迭代器接口，所以我们也可以直接调用forEach方法来遍历：
+
+```c
+cursor.forEach(function(x){
+    print(x)
+    })
+```
+
+当我们调用`find方法`获取cursor时，shell并不会立即查询数据库，而是在真正使用数据时才会去加载，这有点类似于数据库框架中的懒加载，shell在每次查询的时候会获取前100条结果或者前4MB数据(两者之间取最小)，然后我们调用hasNext和next时shell就不用再去连接数据库了，直接一条一条的返回查询到的数据，这100条或者4MB数据全部被返回之后，shell才会再次发起请求向MongoDB要数据。
+
+#### limit
+
+limit是cursor中的方法，用来限制返回结果的数量，比如我只想获取查询的前三条结果，方式如下：
+
+```c
+var cursor = db.sang_collect.find().limit(3)
+```
+
+#### skip
+
+skip也是cursor中的方法，用来表示跳过的记录数，比如我想获取第2到第5条记录，如下：
+
+```c
+var cursor = db.sang_collect.find().skip(2).limit(4)
+```
+
+跳过前两条(0和1)然后获取后面4条数据，skip和limit结合有点类似于MySQL中的limit，可以用来做分页，不过这种分页方式效率过低。
+
+#### sort
+
+sort用来实现排序功能，比如按x排序，如下：
+
+```c
+var cursor = db.sang_collect.find().sort({x:-1})
+```
+
+1表示升序，-1表示降序。

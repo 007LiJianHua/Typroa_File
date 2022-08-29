@@ -31,19 +31,19 @@ rewrite    uri地址    新的uri地址  [标志];
 
 ## 二、URL重写案例
 
-##### 案例1：改写地址中的目录名称
+### 案例1：改写地址中的目录名称
 
 ```bash
 rewrite ^/mp3 http://python.linux.com/music;
 ```
 
-##### 案例2：域名跳转
+### 案例2：域名跳转
 
 ```bash
 rewrite ^/  https://www.baidu.com;
 ```
 
-##### 案例3：实现https的自动跳转
+### 案例3：实现https的自动跳转
 
 ```bash
    location / {

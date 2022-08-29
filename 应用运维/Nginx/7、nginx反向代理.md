@@ -7,7 +7,22 @@
 > * 语法
 >   * proxy_pass 后端服务器地址
 
-### 1、三个简单示例
+### 1、何为反向代理？
+
+在介绍反向代理之前，先来了解一下正向代理。
+
+**正向代理**：如果把局域网外的`Internet`想象成一个巨大的资源库，则局域网中的客户端要访问`Internet`，则需要通过[代理服务器](https://so.csdn.net/so/search?q=代理服务器&spm=1001.2101.3001.7020)来访问，这种代理服务就称为正向代理，下面是正向代理的原理图。
+
+由于工作环境原因，日常工作只能局限于单位的局域网，如果想要访问互联网，怎么办呢？这就需要用到正向代理，本人经常用正向代理来进行上网。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20191013121717337.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3p4ZDE0MzU1MTM3NzU=,size_16,color_FFFFFF,t_70)
+**反向代理**：看下面原理图，就一目了然。其实客户端对代理是无感知的，因为客户端不需要任何配置就可以访问，我们只需要将请求发送到反向代理服务器，由反向代理服务器去选择目标服务器获取数据后，在返回给客户端，此时反向代理服务器和目标服务器对外就是一个服务器，暴露的是代理服务器地址，隐藏了真实服务器 `IP`地址。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20191013122029747.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3p4ZDE0MzU1MTM3NzU=,size_16,color_FFFFFF,t_70)
+
+> 正向代理和反向代理的区别，一句话就是：如果我们客户端自己用，就是正向代理。如果是在服务器用，用户无感知，就是反向代理。
+
+
+
+### 2、三个简单示例
 
 * 示例1：将nginx下/mp3请求转交给后端httpd服务器/music地址
   * 注意：这个例子写在了nginx的主配置文件中，需要将加载的子配置文件注释掉，否则无法访问
@@ -44,7 +59,7 @@ location ~ /testB {
 } 
 ```
 
-### 2、配置后端服务器记录真实的客户端地址
+### 3、配置后端服务器记录真实的客户端地址
 
 * 以后端服务器访问日志为例
   * 在nginx代理服务器中添加客户端的地址
