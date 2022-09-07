@@ -713,3 +713,4 @@ for x in mydoc:
 {'_id': ObjectId('6223589a5fbb76bdbb85050b'), 'name': '关羽', 'hometown': '蜀国', 'age': 40, 'sex': '男'}
 {'_id': ObjectId('6223589a5fbb76bdbb85050a'), 'name': '张飞', 'hometown': '蜀国', 'age': 30, 'sex': '男'}
 ```
+

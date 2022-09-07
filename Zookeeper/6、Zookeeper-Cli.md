@@ -26,7 +26,7 @@ ZooKeeper集合将向znode路径填充10位序列号。例如，znode路径 /mya
 
 **语法**
 
-```
+```bash
 create /path /data
 ```
 
