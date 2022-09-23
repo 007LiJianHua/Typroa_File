@@ -839,7 +839,6 @@ public class CounterInterceptor implements ProducerInterceptor<String, String> {
         System.out.println("Sent failed:" + errorCounter);
     }
 }
-123456789101112131415161718192021222324252627282930
 ```
 
 **在CustomProducer中加入拦截器**
